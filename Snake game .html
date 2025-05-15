@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Enhanced Snake Game</title>
+  <style>
+    body {
+      background-color: #000;
+      color: #0f0;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      background-color: #111;
+      border: 2px solid #0f0;
+    }
+    h2 {
+      color: #0f0;
+      margin-bottom: 10px;
+    }
+    #score {
+      color: #0f0;
+      font-size: 20px;
+      margin: 10px;
+    }
+    .controls {
+      display: flex;
+      gap: 20px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      background-color: #0f0;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 5px;
+    }
+    .restart-btn {
+      background-color: #ff0000;
+      color: #fff;
+      font-size: 18px;
+      margin-top: 20px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      canvas {
+        width: 90vw;
+        height: 90vw;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>🐍 Enhanced Snake Game</h2>
+  <div id="score">Score: 0</div>
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  <div class="controls">
+    <button class="btn" onclick="changeDirection('up')">⬆️</button>
+    <button class="btn" onclick="changeDirection('left')">⬅️</button>
+    <button class="btn" onclick="changeDirection('down')">⬇️</button>
+    <button class="btn" onclick="changeDirection('right')">➡️</button>
+  </div>
+
+  <button class="restart-btn" onclick="restartGame()">Restart Game</button>
+
+  <audio id="eatSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
+  <audio id="gameOverSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreDisplay = document.getElementById("score");
+    const eatSound = document.getElementById("eatSound");
+    const gameOverSound = document.getElementById("gameOverSound");
+
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake, food, dx, dy, score, changingDirection;
+
+    function restartGame() {
+      snake = [{ x: 10, y: 10 }];
+      food = { x: 5, y: 5 };
+      dx = dy = 0;
+      score = 0;
+      scoreDisplay.textContent = "Score: 0";
+      changingDirection = false;
+      gameLoop.frame = 0;
+      requestAnimationFrame(gameLoop);
+    }
+
+    function drawTile(x, y, color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(x * gridSize, y * gridSize, gridSize - 2, gridSize - 2);
+    }
+
+    function gameLoop() {
+      requestAnimationFrame(gameLoop);
+
+      if (++gameLoop.frame % 50 !== 0) return; // Slow down the game speed
+
+      if (dx === 0 && dy === 0) return;
+
+      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+      changingDirection = false;
+
+      // Check for collisions
+      if (
+        head.x < 0 || head.x >= tileCount ||
+        head.y < 0 || head.y >= tileCount ||
+        snake.some(seg => seg.x === head.x && seg.y === head.y)
+      ) {
+        gameOverSound.play();
+        alert("Game Over! Final Score: " + score);
+        return restartGame();
+      }
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        scoreDisplay.textContent = "Score: " + score;
+        eatSound.play();
+        food = {
+          x: Math.floor(Math.random() * tileCount),
+          y: Math.floor(Math.random() * tileCount)
+        };
+      } else {
+        snake.pop();
+      }
+
+      ctx.fillStyle = "#111";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      drawTile(food.x, food.y, "#f00");
+      snake.forEach(seg => drawTile(seg.x, seg.y, "#0f0"));
+    }
+
+    gameLoop.frame = 0;
+
+    function changeDirection(dir) {
+      if (changingDirection) return;
+      changingDirection = true;
+
+      switch (dir) {
+        case "up": if (dy === 0) { dx = 0; dy = -1; } break;
+        case "down": if (dy === 0) { dx = 0; dy = 1; } break;
+        case "left": if (dx === 0) { dx = -1; dy = 0; } break;
+        case "right": if (dx === 0) { dx = 1; dy = 0; } break;
+      }
+    }
+
+    document.addEventListener("keydown", e => {
+      switch (e.key) {
+        case "ArrowUp": changeDirection("up"); break;
+        case "ArrowDown": changeDirection("down"); break;
+        case "ArrowLeft": changeDirection("left"); break;
+        case "ArrowRight": changeDirection("right"); break;
+      }
+    });
+
+    restartGame(); // Start the game when the page loads
+  </script>
+
+</body>
+</html>
